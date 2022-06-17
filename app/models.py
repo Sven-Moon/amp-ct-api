@@ -62,7 +62,6 @@ class Recipe(db.Model):
     recipe_ingredients = db.relationship('RecipeIngredient', backref='recipe')
     
     def __init__(self, r={}):
-        print('-----r-----:',r)
         self.name = r.setdefault('name','')
         self.prep_time = r.setdefault('prep_time',0)
         self.cook_time = r.setdefault('cook_time',0)
@@ -70,14 +69,11 @@ class Recipe(db.Model):
         self.category = r.setdefault('category','')
         self.meal_types = r.setdefault('meal_types',None)
         self.last_made = r.setdefault('last_made',None)
-        print('last made good')         
         self.image = r.setdefault('image',None)
-        print('image good')         
         self.rating = r.setdefault('rating',None)
         self.rating_count = r.setdefault('rating_count',0)
         self.average_cost_rating = r.setdefault('average_cost_rating',None)
         self.created_by = r.setdefault('created_by',None)
-        print('last value good')     
         
         
         # if r:
@@ -129,7 +125,7 @@ class Ingredient(db.Model):
     
     def __init__(self,name,image="https://res.cloudinary.com/sventerprise/image/upload/v1655141310/CT-amp/qm-food_gbsbwk.png"):
         self.name = name
-        self.image=image
+        self.image = image
     
     def update(self,d):
         for k,v in d.items():
@@ -200,7 +196,6 @@ class RecipeIngredient(db.Model):
     
     def __init__(self,recipe_id,ingredient_id,qty,uom):
         self.recipe_id = recipe_id
-        self.ingredient_id = ingredient_id
         self.ingredient_id = ingredient_id
         self.quantity = qty
         self.uom = uom
