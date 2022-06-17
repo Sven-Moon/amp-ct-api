@@ -10,7 +10,7 @@ db = SQLAlchemy()
 
 class User(db.Model):
     id = db.Column(db.String(40), primary_key=True)
-    email = db.Column(db.String(100), nullable=False)
+    email = db.Column(db.String(100), unique=True, nullable=False)
     username = db.Column(db.String(40), unique=True, nullable=False)
     
     date_created = db.Column(db.DateTime, default=datetime.utcnow())
