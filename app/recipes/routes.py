@@ -27,44 +27,55 @@ def get_recipes():
 
 @recipes.route('/create', methods=['POST'])
 def create_recipe():
-    print('prior to make recipe try')
+    # BUILD THE RECIPE
     try:
-        new_recipe = r.get_json()      
-        recipe = Recipe(new_recipe)
-        db.session.commit()
+        new_recipe = r.get_json()    
+        recipe = Recipe(new_recipe)  
+        print(recipe)       
+        db.session.add(recipe)
     except:
-        return({'error': 'recipe recorded but ingredients not saved'})
+        return({'error': 'recipe data is good but adding failled'}), 500
+    # ADD UNKNOWN INGREDIENTS TO DB
     try:
         ingredients = new_recipe['ingredients'] 
+        print('ingredients:', ingredients )
+        print('ingredients type:', type(ingredients ))
         
-        new_ingredients = False
+        # TODO: rewrite to make a single call for all db_ingr
+        new_ingredients = []
         for i, ingr in enumerate(ingredients):
-            ingr_name = ingr['name'].lower()
+            print(ingr)
+            print(f'name_{i}')
+            ingr_name = ingr[f'name_{i}'].lower()
+            print(ingr_name)
             
             ingr_db = Ingredient.query.filter_by(name=ingr_name).first()
             
             if not ingr_db:
-                new_ingredients = []
                 ingr_db = Ingredient(ingr_name)
                 db.session.add(ingr_db)
                 new_ingredients.append(ingr_db)
-        if new_ingredients:
-            db.session.commit()
-            
-        recipe_db = Recipe.query.filter_by(name=recipe.name).first()   
+        
+        db.session.commit() # commits recipe & any unknown ingredients
+    except: 
+        return jsonify({'error':'Adding either the recipe or its ingredients failed'}), 400
+    # ADD INGREDIENT LIST TO THE RECIPE
+    try: #  recipe ingredients (with ID) definitely in the db
+        recipe_db = Recipe.query.filter_by(name=recipe.name).first() # ! recipe.name not unique
 
-        for ingr in ingredients:
-            ingr_name = ingr['name'].lower()
+        for i, ingr in enumerate(ingredients):
+            ingr_name = ingr[f'name_{i}'].lower()
             ingr_db = Ingredient.query.filter_by(name=ingr_name).first()
             
-            recipeIngredient = RecipeIngredient(recipe_db.id, ingr_db.id, ingr['quantity'], ingr['uom'])
+            recipeIngredient = RecipeIngredient(recipe_db.id, ingr_db.id, ingr[f'quantity_{i}'], ingr[f'uom_{i}'])
             db.session.add(recipeIngredient)
+        print('about to commit')
         db.session.commit()
             
         return jsonify({'success': 'recipe created'}), 201
     except Exception as e:
-        print(e)
-        return({'error': 'see log for error'}), 400
+        print('error:',e)
+        return({'error': 'see log for error'}), 500
     
     
 @recipes.route('/update/<int:id>', methods=['POST'])
@@ -73,18 +84,20 @@ def update_update(id):
         id = int(id)
         updates = r.get_json()
         recipe = Recipe.query.get(id)
+        if not recipe:
+            return jsonify({'error':'recipe not found'}), 400
         recipe.update(updates)
-        print(recipe.to_dict())
         db.session.add(recipe)
         db.session.commit()
     except:
         return jsonify({'error': 'could not update recipe'}), 400
     return jsonify({'success': recipe.to_dict()}), 200
+
 @recipes.route('/delete/<int:id>', methods=['DELETE'])
 def delete_recipe(id):
     try:
-        r = Recipe.query.get(id)
-        db.session.delete(r)
+        recipe = Recipe.query.get(id)
+        db.session.delete(recipe)
         db.session.commit()
     except:    
         return jsonify({'failure': f'recipe not deleted'}), 400

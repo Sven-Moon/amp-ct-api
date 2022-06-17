@@ -17,6 +17,7 @@ def get_all_users():
 
 @user.route('/register', methods=['POST'])
 def create_user():    
+    """Register is """
     try:    
         data = r.get_json()
         username = User.query.filter_by(username=data['username']).first()
@@ -40,3 +41,24 @@ def create_user():
         return jsonify({'error':'Server error. User not added.'})
     
     return jsonify({'Success': 'User created'}), 201
+        
+
+@user.route('/<string:id>/update', methods=['POST'])
+def update_user(id):
+    
+    # TODO
+    
+    return jsonify({'Success': 'User updated'}), 201
+
+@user.route('/<string:id>/update', methods=['DELETE'])
+def delete_user(id):    
+    user = User.query.get(id)
+    if not user:
+        return ('Could not find user')
+    else:
+        try: 
+            User.delete(user)
+            db.commit()
+        except:
+            return jsonify({'error', 'an unknown error occurred'}), 500
+    return jsonify({'Success': 'User deleted'}), 201

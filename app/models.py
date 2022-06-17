@@ -54,24 +54,38 @@ class Recipe(db.Model):
     meal_types = db.Column(db.Integer)
     last_made = db.Column(db.DateTime)
     image = db.Column(db.String(500))
-    scheduled = db.Column(db.Boolean, default=False)
-    fixed_schedule = db.Column(db.Boolean, default=False)
-    fixed_period = db.Column(db.SmallInteger)
     rating = db.Column(db.SmallInteger)
     rating_count = db.Column(db.SmallInteger, default=0)
-    
+    average_cost_rating = db.Column(db.SmallInteger)    
     created_by = db.Column(db.String(100), db.ForeignKey('user.id'))
     recipe_box_recipe = db.relationship('RecipeBox', backref='recipes')
     recipe_ingredients = db.relationship('RecipeIngredient', backref='recipe')
     
     def __init__(self, r={}):
-        print(r)
-        if r:
-            for k,v in r.items():
-                if k != 'ingredients':
-                    print(k)
-                    getattr(self,k)
-                    setattr(self,k,v) 
+        print('-----r-----:',r)
+        self.name = r.setdefault('name','')
+        self.prep_time = r.setdefault('prep_time',0)
+        self.cook_time = r.setdefault('cook_time',0)
+        self.instructions = r.setdefault('instructions','')
+        self.category = r.setdefault('category','')
+        self.meal_types = r.setdefault('meal_types',None)
+        self.last_made = r.setdefault('last_made',None)
+        print('last made good')         
+        self.image = r.setdefault('image',None)
+        print('image good')         
+        self.rating = r.setdefault('rating',None)
+        self.rating_count = r.setdefault('rating_count',0)
+        self.average_cost_rating = r.setdefault('average_cost_rating',None)
+        self.created_by = r.setdefault('created_by',None)
+        print('last value good')     
+        
+        
+        # if r:
+        #     for k,v in r.items():
+        #         if k != 'ingredients':
+        #             print(k)
+        #             getattr(self,k)
+        #             setattr(self,k,v) 
                 
     def to_dict(self):
         return {
@@ -167,6 +181,11 @@ class RecipeBox(db.Model):
     user_id = db.Column(db.String(100), db.ForeignKey('user.id'), primary_key=True)
     recipe_id = db.Column(db.Integer, db.ForeignKey('recipe.id'), primary_key=True)
     custom_instr = db.Column(db.String(3000))
+    scheduled = db.Column(db.Boolean, default=False)
+    fixed_schedule = db.Column(db.Boolean, default=False)
+    fixed_period = db.Column(db.SmallInteger)
+    rating = db.Column(db.SmallInteger)
+    cost_rating = db.Column(db.SmallInteger)
     
     def update(self,d):
         for k,v in d.items():
