@@ -49,10 +49,9 @@ def create_recipe():
     # BUILD THE RECIPE
     try:
         new_recipe = r.get_json()    
-        user_email = new_recipe['created_by']
-        new_recipe['created_by'] = User.query.filter_by(email=user_email).first().id
+        username = new_recipe['created_by']
+        new_recipe['created_by'] = User.query.filter_by(username=username).first().id
         recipe = Recipe(new_recipe)  
-        print('recipe',new_recipe)       
         db.session.add(recipe)
         
     except:
@@ -64,13 +63,7 @@ def create_recipe():
         # TODO: rewrite to make a single call for all db_ingr
         for i, ingr in enumerate(ingredients):
             ingr_name = ingr[f'name_{i}'].lower()
-            
-            print('looking up:',ingr_name)
-            print('type:',type(ingr_name)) # type: <class 'str'>
-            
-            #! WHAT'S WRONG HERE???
             ingr_db = Ingredient.query.filter_by(name=ingr_name).first()
-            print('ingr_db', ingr_db) #<< doesn't print
             
             if not ingr_db:
                 ingr_db = Ingredient(ingr_name)
@@ -92,12 +85,11 @@ def create_recipe():
                 ingr_db.id, 
                 ingr[f'quantity_{i}'], ingr[f'uom_{i}'])
             db.session.add(recipeIngredient)
-        print('about to commit')
         db.session.commit()
             
         return jsonify({'success': 'recipe created'}), 201
     except Exception as e:
-        print('error:',e)
+        print('error:', e)
         return({'error': 'see log for error'}), 500
     
     

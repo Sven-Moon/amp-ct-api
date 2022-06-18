@@ -16,7 +16,7 @@ app.config.from_object(Config)
 
 db.init_app(app)
 migrate = Migrate(app,db)
-CORS(app, origins=['http://127.0.0.1:3000/', 'http://localhost:3000'])
+CORS(app, origins=['http://127.0.0.1:3000/', 'http://localhost:3000','http://localhost:3000/', 'http://localhost:3000/register'])
 
 app.register_blueprint(user)
 app.register_blueprint(recipes)
