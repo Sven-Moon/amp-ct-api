@@ -1,3 +1,4 @@
+from cgi import print_arguments
 from datetime import datetime
 import secrets
 from turtle import back
@@ -23,10 +24,12 @@ class User(db.Model):
     user_day = db.relationship('Day', backref='user')   
     
     def __init__(self,email,username):
+        print(f'In User: {email} - {username}')
         self.id = str(uuid.uuid4())
         self.username = username
         self.email = email
         self.token = secrets.token_hex(32)
+        print('init complete')
         
     def to_dict(self):
         return {

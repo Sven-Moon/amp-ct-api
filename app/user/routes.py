@@ -38,14 +38,20 @@ def create_user():
     print('hit register')
     try:
         data = r.get_json()
-        print(data)
+        print(f'about to username ({data["username"]})')
         username = User.query.filter_by(username=data['username']).first()
+        print(f'about to email ({data["email"]}')
+        
         email = User.query.filter_by(email=data['email']).first()
+        print('after email')
         if username:
+            print('username!!')
             return ('That username is already in use')
         if email:
+            print('email!!!')
             return ('That email is already in use')
         else:
+            print('try new user')
             try:
                 new_user = User(data['email'], data['username'])
             except:
@@ -62,7 +68,7 @@ def create_user():
     except:
         return jsonify({'error':'Server error. User not added.'})        
     
-    return jsonify({'msg': 'Success: User created', 'user': new_user}), 200
+    return jsonify({'msg': 'Success: User created', 'user': new_user.to_dict()}), 200
         
 
 @user.route('/<string:id>/update', methods=['POST'])
