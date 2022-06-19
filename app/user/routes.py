@@ -38,27 +38,20 @@ def create_user():
     print('hit register')
     try:
         data = r.get_json()
-        print(f'about to username ({data["username"]})')
-        username = User.query.filter_by(username=data['username']).first()
-        print(f'about to email ({data["email"]}')
-        
+        username = User.query.filter_by(username=data['username']).first()        
         email = User.query.filter_by(email=data['email']).first()
-        print('after email')
-        if username:
-            print('username!!')
-            return ('That username is already in use')
-        if email:
-            print('email!!!')
-            return ('That email is already in use')
-        else:
-            print('try new user')
-            try:
-                new_user = User(data['email'], data['username'])
-            except:
-                return jsonify({'error': 'improper request or body data'}), 400            
     except:
-        print('didn\'t get data')    
-    
+        return ({'message': 'Submitted data type(s) incorrect'}), 400
+        
+    if username:
+        return ({'message': 'That username is already in use'}), 400
+    if email:
+        return ({'message': 'That email is already in use'}), 400
+    else:
+        try:
+            new_user = User(data['email'], data['username'])
+        except:
+            return jsonify({'message': 'email or username malformed'}), 400    
     try:
         db.session.add(new_user)
         db.session.commit()
@@ -66,9 +59,9 @@ def create_user():
         print('attempting to print new_user.id')
         print(new_user.id)
     except:
-        return jsonify({'error':'Server error. User not added.'})        
+        return jsonify({'message':'Server error. User not added.'}), 500      
     
-    return jsonify({'msg': 'Success: User created', 'user': new_user.to_dict()}), 200
+    return jsonify({'message': 'Success: User created', 'user': new_user.to_dict()}), 200
         
 
 @user.route('/<string:id>/update', methods=['POST'])
@@ -76,7 +69,7 @@ def update_user(id):
     
     # TODO
     
-    return jsonify({'Success': 'User updated'}), 201
+    return jsonify({'message': 'Success: User updated'}), 201
 
 @user.route('/<string:id>/update', methods=['DELETE'])
 def delete_user(id):    
@@ -89,4 +82,4 @@ def delete_user(id):
             db.commit()
         except:
             return jsonify({'error', 'an unknown error occurred'}), 500
-    return jsonify({'Success': 'User deleted'}), 201
+    return jsonify({'message': 'Success User deleted'}), 201

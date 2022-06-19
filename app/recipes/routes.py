@@ -49,8 +49,7 @@ def create_recipe():
     # BUILD THE RECIPE
     try:
         new_recipe = r.get_json()    
-        username = new_recipe['created_by']
-        new_recipe['created_by'] = User.query.filter_by(username=username).first().id
+        print(new_recipe)
         recipe = Recipe(new_recipe)  
         db.session.add(recipe)
         

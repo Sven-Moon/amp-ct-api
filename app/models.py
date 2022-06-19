@@ -159,6 +159,24 @@ class Schedule(db.Model):
     plan_lunch = db.Column(db.Boolean, default=True)
     plan_dinner = db.Column(db.Boolean, default=True)
     
+    def __init__(self, schedule) -> None:
+        self.user_id: schedule.setDefault('user_id',None)
+        self.veg_freq: schedule.setDefault('veg_freq',None)
+        self.pork_freq: schedule.setDefault('pork_freq',None)
+        self.chicken_freq: schedule.setDefault('chicken_freq',None)
+        self.beef_freq: schedule.setDefault('beef_freq',None)
+        self.fish_freq: schedule.setDefault('fish_freq',None)
+        self.auto_made: schedule.setDefault('auto_made',None)
+        self.store_trip_method: schedule.setDefault('store_trip_method',None)
+        self.store_days_btwn: schedule.setDefault('store_days_btwn',None)
+        self.store_trip_days: schedule.setDefault('store_trip_days',None)
+        self.store_meal_position: schedule.setDefault('store_meal_position',None)
+        self.plan_ahead_days: schedule.setDefault('plan_ahead_days',None)
+        self.next_store_trip: schedule.setDefault('next_store_trip',None)
+        self.plan_breakfast: schedule.setDefault('plan_breakfast',None)
+        self.plan_lunch: schedule.setDefault('plan_lunch',None)
+        self.plan_dinner: schedule.setDefault('plan_dinner',None)
+    
     def update(self,d):
         for k,v in d.items():
             getattr(self,k)
