@@ -28,6 +28,15 @@ def get_user_by_id(id):
     
     return jsonify({'user': user.to_dict()}),200
 
+@user.route('/reg/<string:email>', methods=['GET'])
+def get_registered_user(email):
+    
+    user = User.query.filter_by(email=email).first()
+    if not user:
+        return jsonify('user not found')
+    
+    return jsonify({'user': user.to_dict_reg()}),200
+
 @user.route('/get_all', methods=['GET'])
 def get_all_users():
     users = User.query.all()
@@ -61,7 +70,7 @@ def create_user():
     except:
         return jsonify({'message':'Server error. User not added.'}), 500      
     
-    return jsonify({'message': 'Success: User created', 'user': new_user.to_dict()}), 200
+    return jsonify({'message': 'Success: User created', 'user': new_user.to_dict_reg()}), 200
         
 
 @user.route('/<string:id>/update', methods=['POST'])

@@ -39,6 +39,15 @@ class User(db.Model):
             "date_created": self.date_created
         }
         
+    def to_dict_reg(self):
+        return {
+            "id": self.id,
+            "email": self.email,
+            "username": self.username,
+            "date_created": self.date_created,
+            "access-token": self.token
+        }        
+        
     def get_token(self):
         return {"access-token": self.token}
     
