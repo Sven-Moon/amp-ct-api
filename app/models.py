@@ -212,7 +212,7 @@ class RecipeBox(db.Model):
 class RecipeIngredient(db.Model):
     recipe_id = db.Column(db.Integer, db.ForeignKey('recipe.id'), primary_key=True)
     ingredient_id = db.Column(db.Integer, db.ForeignKey('ingredient.id'), primary_key=True)
-    quantity = db.Column(db.SmallInteger, default=1)
+    quantity = db.Column(db.String(10), default="1")
     uom = db.Column(db.String(10), default=None)    
     
     def __init__(self,recipe_id,ingredient_id,qty,uom):
