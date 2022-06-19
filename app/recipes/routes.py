@@ -46,34 +46,38 @@ def get_recipes_by_user(email):
 
 @recipes.route('/create', methods=['POST'])
 def create_recipe():
+    # check for user having same named recipe
+    user_recipe_exists = Recipe.query.filter_by(
+        name=recipe.name,
+        created_by=recipe.created_by).first()
+    if user_recipe_exists:
+        return({'message': 'Error: User recipe with this name already exists'}), 400        
     # BUILD THE RECIPE
     try:
         new_recipe = r.get_json()    
-        print(new_recipe)
         recipe = Recipe(new_recipe)  
-        db.session.add(recipe)
-        
     except:
-        return({'error': 'recipe data is good but adding failed'}), 500
+        return({'message': 'Error: Bad data shape provided'}), 400
+    try:    
+        db.session.add(recipe)        
+    except:
+        return({'message': 'Error: Recipe data is good but adding failed'}), 500
     # ADD UNKNOWN INGREDIENTS TO DB
     try:
         ingredients = new_recipe['ingredients'] 
-        
         # TODO: rewrite to make a single call for all db_ingr
         for i, ingr in enumerate(ingredients):
             ingr_name = ingr[f'name_{i}'].lower()
             ingr_db = Ingredient.query.filter_by(name=ingr_name).first()
-            
             if not ingr_db:
                 ingr_db = Ingredient(ingr_name)
                 db.session.add(ingr_db)
-        
         db.session.commit() # commits recipe & any unknown ingredients
     except: 
-        return jsonify({'error':'Adding either the recipe or its ingredients failed'}), 400
+        return jsonify({'message':'Error: Commit of either the recipe or its ingredients failed'}), 400
     # ADD INGREDIENT LIST TO THE RECIPE
     try: #  recipe ingredients (with ID) definitely in the db
-        recipe_db = Recipe.query.filter_by(name=recipe.name).first() # ! recipe.name not unique
+        recipe_db = Recipe.query.filter_by(name=recipe.name,created_by=recipe.created_by).first()
 
         for i, ingr in enumerate(ingredients):
             ingr_name = ingr[f'name_{i}'].lower()

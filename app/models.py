@@ -69,7 +69,7 @@ class Recipe(db.Model):
     rating = db.Column(db.SmallInteger)
     rating_count = db.Column(db.SmallInteger, default=0)
     average_cost_rating = db.Column(db.SmallInteger)    
-    created_by = db.Column(db.String(100), db.ForeignKey('user.id'))
+    created_by = db.Column(db.String(100), db.ForeignKey('user.username'))
     recipe_box_recipe = db.relationship('RecipeBox', backref='recipes')
     recipe_ingredients = db.relationship('RecipeIngredient', backref='recipe')
     
@@ -86,15 +86,7 @@ class Recipe(db.Model):
         self.rating_count = r.setdefault('rating_count',0)
         self.average_cost_rating = r.setdefault('average_cost_rating',None)
         self.created_by = r.setdefault('created_by',None)
-        
-        
-        # if r:
-        #     for k,v in r.items():
-        #         if k != 'ingredients':
-        #             print(k)
-        #             getattr(self,k)
-        #             setattr(self,k,v) 
-                
+                        
     def to_dict(self):
         return {
             "id": self.id,
@@ -104,9 +96,6 @@ class Recipe(db.Model):
             "instructions":self.instructions,
             "category":self.category,
             "meal_types":self.meal_types,
-            "scheduled":self.scheduled,
-            "fixed_schedule":self.fixed_schedule,
-            "fixed_period":self.fixed_period,
             "created_by":self.created_by
         }
         
