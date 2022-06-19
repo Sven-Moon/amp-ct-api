@@ -25,11 +25,11 @@ def get_recipes():
     return jsonify({"recipes": [r.to_dict() for r in recipes ]}), 200
 
 
-@recipes.route('/<string:email>', methods=['GET'])
-def get_recipes_by_user(email):
+@recipes.route('/<string:username>', methods=['GET'])
+def get_recipes_by_user(username):
     print('getting user')
     try:
-        user = User.query.filter_by(email=email).first()
+        user = User.query.filter_by(username=username).first()
         print(user)
         if not user:
             return jsonify('could not find user')
@@ -46,18 +46,18 @@ def get_recipes_by_user(email):
 
 @recipes.route('/create', methods=['POST'])
 def create_recipe():
-    # check for user having same named recipe
-    user_recipe_exists = Recipe.query.filter_by(
-        name=recipe.name,
-        created_by=recipe.created_by).first()
-    if user_recipe_exists:
-        return({'message': 'Error: User recipe with this name already exists'}), 400        
     # BUILD THE RECIPE
     try:
         new_recipe = r.get_json()    
         recipe = Recipe(new_recipe)  
     except:
         return({'message': 'Error: Bad data shape provided'}), 400
+    # check for user having same named recipe
+    user_recipe_exists = Recipe.query.filter_by(
+        name=recipe.name,
+        created_by=recipe.created_by).first()
+    if user_recipe_exists:
+        return({'message': 'Error: User recipe with this name already exists'}), 400        
     try:    
         db.session.add(recipe)        
     except:
@@ -90,7 +90,7 @@ def create_recipe():
             db.session.add(recipeIngredient)
         db.session.commit()
             
-        return jsonify({'success': 'recipe created'}), 201
+        return jsonify({'success': 'Recipe created'}), 201
     except Exception as e:
         print('error:', e)
         return({'error': 'see log for error'}), 500

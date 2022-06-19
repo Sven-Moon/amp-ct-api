@@ -68,7 +68,7 @@ class Recipe(db.Model):
     image = db.Column(db.String(500))
     rating = db.Column(db.SmallInteger)
     rating_count = db.Column(db.SmallInteger, default=0)
-    average_cost_rating = db.Column(db.SmallInteger)    
+    average_cost_rating = db.Column(db.String(3), default="1")    
     created_by = db.Column(db.String(100), db.ForeignKey('user.username'))
     recipe_box_recipe = db.relationship('RecipeBox', backref='recipes')
     recipe_ingredients = db.relationship('RecipeIngredient', backref='recipe')
