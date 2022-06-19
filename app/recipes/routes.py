@@ -1,3 +1,4 @@
+from datetime import datetime, timedelta
 from flask import jsonify, Blueprint, request as r
 from app.models import Ingredient, RecipeIngredient, db, Recipe, User
 
@@ -42,6 +43,39 @@ def get_recipes_by_user(username):
     return jsonify({"recipes": [r.to_dict() for r in recipes ]}), 200
 
 
+@recipes.route('/search', methods=['POST'])
+def recipe_search():
+    print(r.get_json())
+    try:
+        filters = r.get_json()
+    except:
+        return jsonify({'message':'The request looks funny'}), 401
+    print('hit recipe search')
+    print(filters)
+    prep_time = filters['prep_time'] if filters['prep_time'] else 999
+    cook_time = filters['cook_time'] if filters['cook_time'] else 999
+    categories = filters['categories'] if filters['categories'] else ['vegetarian', 'pork', 'fish', 'beef', 'chicken']   
+    last_made = filters['last_made'] if filters['last_made'] else 0
+    filters['meal_types'] = f'[filters.meal_types]' #regex
+    if ['last_made']:
+        current_time = datetime.utcnow()
+        cutoff = current_time - timedelta(days=last_made)
+    else:
+        cutoff = datetime.utcnow()
+    
+    results = Recipe.query.filter(Recipe.created_by==filters['created_by']).all()
+    # results = Recipe.query.filter(Recipe.created_by==filters['created_by'],
+                        #    Recipe.prep_time <= prep_time,
+                        #    Recipe.cook_time <= cook_time,
+                        #    Recipe.category.in_(categories),
+                        #    Recipe.meal_types.regex_match(filters.meal_types),
+                        #    Recipe.last_made <= cutoff
+                        #    )
+                        #    Recipe.rating >= filters.rating,
+                        #    Recipe.average_cost_rating >= filters.average_cost_rating    
+                           
+    
+    return jsonify({'recipes': [recipe.to_dict() for recipe in results]}), 200
 
 
 @recipes.route('/create', methods=['POST'])
