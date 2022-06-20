@@ -1,5 +1,6 @@
 from flask import jsonify, Blueprint, request as r
-from app.models import db, User
+from sqlalchemy import func
+from app.models import RecipeBox, db, User
 from ..services import token_required
 
 
@@ -47,31 +48,30 @@ def create_user():
     print('hit register')
     try:
         data = r.get_json()
-        username = User.query.filter_by(username=data['username']).first()        
-        email = User.query.filter_by(email=data['email']).first()
+        username = data['username'].strip()
+        email = data['email'].lower().strip()
+        username_already_present = User.query.filter(
+            func.lower(username)==username).first()     
+        email_already_present = User.query.filter_by(email=email).first()
     except:
         return ({'message': 'Submitted data type(s) incorrect'}), 400
         
-    if username:
+    if username_already_present:
         return ({'message': 'That username is already in use'}), 400
-    if email:
+    if email_already_present:
         return ({'message': 'That email is already in use'}), 400
     else:
         try:
-            new_user = User(data['email'], data['username'])
+            new_user = User(email, username)
         except:
             return jsonify({'message': 'email or username malformed'}), 400    
     try:
         db.session.add(new_user)
         db.session.commit()
-        print(new_user)
-        print('attempting to print new_user.id')
-        print(new_user.id)
     except:
         return jsonify({'message':'Server error. User not added.'}), 500      
     
     return jsonify({'message': 'Success: User created', 'user': new_user.to_dict_reg()}), 200
-        
 
 @user.route('/<string:id>/update', methods=['POST'])
 def update_user(id):
@@ -92,8 +92,3 @@ def delete_user(id):
         except:
             return jsonify({'error', 'an unknown error occurred'}), 500
     return jsonify({'message': 'Success User deleted'}), 201
-
-@user.route('/<string:username>/recipe/<int:recipe_id>/add', methods=['POST'])
-def add_user_recipe(username, recipe_id):
-    
-    return jsonify({'message': 'User recipe added'}), 201

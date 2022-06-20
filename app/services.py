@@ -1,7 +1,7 @@
 from functools import wraps
 from flask import jsonify, request
 from app.models import User
-from app.models import Ingredient, RecipeIngredient, db, Recipe
+from app.models import Ingredient, RecipeIngredient
 
 def token_required(api_route):
     @wraps(api_route)
@@ -34,4 +34,3 @@ def get_recipe_ingredients(recipe_id):
             'uom': ri.uom })
     
     return ingredients
-    

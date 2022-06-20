@@ -1,7 +1,10 @@
 from datetime import datetime, timedelta
 from flask import jsonify, Blueprint, request as r
-from app.models import Ingredient, RecipeIngredient, db, Recipe, User
+from sqlalchemy import func
+from app.models import Ingredient, RecipeBox, RecipeIngredient, db, Recipe, User
 from app.services import get_recipe_ingredients
+from sqlalchemy.exc import SQLAlchemyError
+
 
 recipes= Blueprint('recipes',__name__, url_prefix='/api/v1/recipes')
 
@@ -16,7 +19,6 @@ def test():
         
     return jsonify({"recipes": [r.to_dict() for r in recipes ]}), 200
 
-
 @recipes.route('/all', methods=['GET'])
 def get_recipes():
     try:
@@ -26,6 +28,38 @@ def get_recipes():
         
     return jsonify({"recipes": [r.to_dict() for r in recipes ]}), 200
 
+@recipes.route('/recipebox/<string:username>', methods=['POST'])
+def get_user_recipes(username):
+    
+    try:
+        # get user_id: 
+        user_id = User.query.filter_by(username=username).first().id
+    except:
+        return jsonify({'message': 'Error: user not found'}), 401
+    # find all the recipe ids in user-recipe
+    user_recipes = RecipeBox.query.filter_by(user_id=user_id).all()
+    # shape: [UserRecipe_obj] user/recipe ids, scheduling & custom recipe fields    
+    # get the recipe data from recipes table
+    recipe_ids = [r.id for r in user_recipes] #[int, ...]
+    recipes_obj = Recipe.query.filter(Recipe.id.in_(recipe_ids)).all()
+    # shape: [Recipe_obj]
+    # create & fill list of recipes that fills in info from both
+    recipes = []
+    for recipe_obj in recipes_obj:
+        user_recipe_obj = user_recipes[recipe_obj.id] 
+        recipe = recipe_obj.to_dict_w_ingredients()
+        
+        recipe['custom_instr'] = user_recipe_obj.custom_instr
+        recipe['scheduled'] = user_recipe_obj.scheduled
+        recipe['fixed_schedule'] = user_recipe_obj.fixed_schedul
+        recipe['fixed_period'] = user_recipe_obj.fixed_period
+        recipe['rating'] = user_recipe_obj.rating
+        recipe['cost_rating'] = user_recipe_obj.cost_rating
+        recipes.append(recipe)
+        
+    print(recipes)
+    
+    return jsonify({'UserRecipes': recipes})
 
 @recipes.route('/<string:username>', methods=['GET'])
 def get_recipes_by_user(username):
@@ -43,7 +77,6 @@ def get_recipes_by_user(username):
         
     return jsonify({"recipes": [r.to_dict() for r in recipes ]}), 200
 
-
 @recipes.route('/search', methods=['POST'])
 def recipe_search():
     print(r.get_json())
@@ -51,11 +84,16 @@ def recipe_search():
         filters = r.get_json()
     except:
         return jsonify({'message':'The request looks funny'}), 401
+    # never return recipes made by the user (default created_by)
     queries = []
-    
-    if filters['userRecipes']:
+    # only set created_by as a filter if value isn't the username
+    if filters['created_by']:
         queries.append(Recipe.created_by==filters['created_by'])
-    else: queries.append(Recipe.created_by!=filters['created_by'])
+    # normally filter out user, but not if create_by is present
+    # user may be looking for their own recipes & they would be filtered
+    # out if it wasn't them, anyway
+    else:
+        queries.append(Recipe.created_by!=filters['username'])
     
     print('hit recipe search')
     print(filters)
@@ -87,19 +125,18 @@ def recipe_search():
     
     return jsonify({'recipes': [recipe.to_dict_w_ingredients() for recipe in results]}), 200
 
-
 @recipes.route('/create', methods=['POST'])
 def create_recipe():
     # BUILD THE RECIPE
     try:
         new_recipe = r.get_json()    
-        recipe = Recipe(new_recipe)  
+        recipe = Recipe(new_recipe)
     except:
         return({'message': 'Error: Bad data shape provided'}), 400
     # check for user having same named recipe
-    user_recipe_exists = Recipe.query.filter_by(
-        name=recipe.name,
-        created_by=recipe.created_by).first()
+    user_recipe_exists = Recipe.query.filter(
+        func.lower(Recipe.name)==recipe.name.lower().strip(),
+        func.lower(Recipe.created_by)==recipe.created_by.lower()).first()
     if user_recipe_exists:
         return({'message': 'Error: User recipe with this name already exists'}), 400        
     try:    
@@ -133,12 +170,25 @@ def create_recipe():
                 ingr[f'quantity_{i}'], ingr[f'uom_{i}'])
             db.session.add(recipeIngredient)
         db.session.commit()
+        
+        # TODO: add to user's recipebox
+        try:
+            user_id = User.query.filter_by(username=recipe.created_by).first().id          
+            userRecipe = RecipeBox(user_id, recipe.id)
+            db.session.add(userRecipe)                       
+            db.session.commit()
+        except SQLAlchemyError as e:
+            error = str(e.__dict__['orig'])
+            print(error)
+            return error            
+        except:
+            return({'message': 'Recipe was created but not added to user Recipe Box. To add it to your box, search for it and add it manually.'}), 207
+            
             
         return jsonify({'success': 'Recipe created'}), 201
     except Exception as e:
         print('error:', e)
-        return({'error': 'see log for error'}), 500
-    
+        return({'message': 'Server error'}), 500
     
 @recipes.route('/update/<int:id>', methods=['POST'])
 def update_update(id):
@@ -164,3 +214,27 @@ def delete_recipe(id):
     except:    
         return jsonify({'failure': f'recipe not deleted'}), 400
     return jsonify({'success': f'deleted recipe, id:{id}'}), 204
+
+# RECIPEBOX
+@recipes.route('/recipebox/<string:username>/add/<int:recipe_id>', methods=['POST'])
+def add_recipe_to_recipebox(username,recipe_id):
+    
+    opts = r.get_json()
+    # get  user id
+    try: 
+        user_id = User.query.filter_by(username=username).first().id
+    except:
+        return jsonify({'message': 'Error: User could not be found'}), 400
+    # use user_id & recipe_id to create entry
+    try:
+        user_recipe = RecipeBox(user_id, recipe_id, opts['scheduled'], opts['fixed_schedule'], opts['fixed_period'])
+    except:
+        return jsonify({'message': 'Error: User return bad data'}), 400
+    try:
+        db.session.add(user_recipe)
+        db.session.commit()
+    except:
+        return jsonify({'message': 'Error: User recipe could not be added'}), 500
+        
+    
+    return jsonify({'message': 'User recipe added'}), 201

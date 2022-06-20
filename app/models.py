@@ -209,18 +209,39 @@ class Day(db.Model):
 class RecipeBox(db.Model):
     user_id = db.Column(db.String(100), db.ForeignKey('user.id'), primary_key=True)
     recipe_id = db.Column(db.Integer, db.ForeignKey('recipe.id'), primary_key=True)
-    custom_instr = db.Column(db.String(3000))
-    scheduled = db.Column(db.Boolean, default=False)
-    fixed_schedule = db.Column(db.Boolean, default=False)
+    custom_instr = db.Column(db.String(3000), default=None)
+    scheduled = db.Column(db.Boolean, default=True, nullable=False)
+    fixed_schedule = db.Column(db.Boolean, default=False, nullable=False)
     fixed_period = db.Column(db.SmallInteger)
     rating = db.Column(db.SmallInteger)
     cost_rating = db.Column(db.SmallInteger)
+    
+    def __init__(self,user_id, recipe_id, 
+                 scheduled=True, fixed_schedule=False, fixed_period=14):
+        self.user_id = user_id
+        self.recipe_id = recipe_id
+        self.scheduled = scheduled
+        self.fixed_schedule = fixed_schedule
+        self.fixed_period = fixed_period    
+        self.rating = None
+        self.cost_rating = None 
     
     def update(self,d):
         for k,v in d.items():
             getattr(self,k)
             setattr(self,k,v)
-    
+            
+    def to_dict(self):
+        return {
+            'user_id': self.user_id,
+            'recipe_id': self.recipe_id,
+            'custom_instr': self.custom_instr,
+            'scheduled': self.scheduled,
+            'fixed_schedule': self.fixed_schedule,
+            'fixed_period': self.fixed_period,   
+            'rating': self.rating,
+            'cost_rating': self.cost_rating}
+
 class RecipeIngredient(db.Model):
     recipe_id = db.Column(db.Integer, db.ForeignKey('recipe.id'), primary_key=True)
     ingredient_id = db.Column(db.Integer, db.ForeignKey('ingredient.id'), primary_key=True)
