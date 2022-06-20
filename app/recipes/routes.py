@@ -51,6 +51,12 @@ def recipe_search():
         filters = r.get_json()
     except:
         return jsonify({'message':'The request looks funny'}), 401
+    queries = []
+    
+    if filters['userRecipes']:
+        queries.append(Recipe.created_by==filters['created_by'])
+    else: queries.append(Recipe.created_by!=filters['created_by'])
+    
     print('hit recipe search')
     print(filters)
     prep_time = filters['prep_time'] if filters['prep_time'] else 999
@@ -64,7 +70,7 @@ def recipe_search():
     else:
         cutoff = datetime.utcnow()
     
-    results = Recipe.query.filter(Recipe.created_by==filters['created_by']).all()
+    results = Recipe.query.filter(*queries).all()
     # results = Recipe.query.filter(Recipe.created_by==filters['created_by'],
                         #    Recipe.prep_time <= prep_time,
                         #    Recipe.cook_time <= cook_time,
