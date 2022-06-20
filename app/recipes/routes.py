@@ -1,6 +1,7 @@
 from datetime import datetime, timedelta
 from flask import jsonify, Blueprint, request as r
 from app.models import Ingredient, RecipeIngredient, db, Recipe, User
+from app.services import get_recipe_ingredients
 
 recipes= Blueprint('recipes',__name__, url_prefix='/api/v1/recipes')
 
@@ -72,10 +73,13 @@ def recipe_search():
                         #    Recipe.last_made <= cutoff
                         #    )
                         #    Recipe.rating >= filters.rating,
-                        #    Recipe.average_cost_rating >= filters.average_cost_rating    
+                        #    Recipe.average_cost_rating >= filters.average_cost_rating   
+    
+    for recipe in results:
+        recipe.ingredients = get_recipe_ingredients(recipe.id)
                            
     
-    return jsonify({'recipes': [recipe.to_dict() for recipe in results]}), 200
+    return jsonify({'recipes': [recipe.to_dict_w_ingredients() for recipe in results]}), 200
 
 
 @recipes.route('/create', methods=['POST'])

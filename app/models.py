@@ -96,7 +96,21 @@ class Recipe(db.Model):
             "instructions":self.instructions,
             "category":self.category,
             "meal_types":self.meal_types,
-            "created_by":self.created_by
+            "created_by":self.created_by,
+            "image": self.image
+        }
+    def to_dict_w_ingredients(self):
+        return {
+            "id": self.id,
+            "name": self.name,
+            "prep_time": self.prep_time,
+            "cook_time":self.cook_time,
+            "instructions":self.instructions,
+            "category":self.category,
+            "meal_types":self.meal_types,
+            "created_by":self.created_by,
+            "image": self.image,
+            "ingredients": self.ingredients
         }
         
     def update(self,d):

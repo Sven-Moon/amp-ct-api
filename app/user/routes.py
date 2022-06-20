@@ -92,3 +92,8 @@ def delete_user(id):
         except:
             return jsonify({'error', 'an unknown error occurred'}), 500
     return jsonify({'message': 'Success User deleted'}), 201
+
+@user.route('/<string:username>/recipe/<int:recipe_id>/add', methods=['POST'])
+def add_user_recipe(username, recipe_id):
+    
+    return jsonify({'message': 'User recipe added'}), 201
