@@ -5,7 +5,7 @@ from .models import db
 from flask_migrate import Migrate
 from .user.routes import user
 from .recipes.routes import recipes
-from .schedule.routes import schedule
+from .meal_plan.routes import meal_plan
 from flask_cors import CORS
 import stripe
 
@@ -20,7 +20,7 @@ CORS(app, origins=['http://127.0.0.1:3000/', 'http://localhost:3000','http://loc
 
 app.register_blueprint(user)
 app.register_blueprint(recipes)
-app.register_blueprint(schedule)
+app.register_blueprint(meal_plan)
 
 
 from . import routes

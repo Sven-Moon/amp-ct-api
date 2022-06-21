@@ -18,5 +18,8 @@
     "titleBar.inactiveBackground": "#a6833299",
     "titleBar.inactiveForeground": "#15202b99"
   },
-  "peacock.color": "#a68332"
+  "peacock.color": "#a68332",
+  "cSpell.words": [
+    "Recipebox"
+  ]
 }

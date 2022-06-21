@@ -63,7 +63,7 @@ class Recipe(db.Model):
     cook_time = db.Column(db.Integer, default=0)
     instructions = db.Column(db.String(3000))
     category = db.Column(db.String(30))
-    meal_types = db.Column(db.Integer)
+    meal_types = db.Column(db.String(10))
     image = db.Column(db.String(500))
     rating = db.Column(db.SmallInteger)
     rating_count = db.Column(db.SmallInteger, default=0)
@@ -208,16 +208,27 @@ class Day(db.Model):
     lunch_recipe_id = db.Column(db.Integer, db.ForeignKey('recipe.id'))
     dinner_recipe_id = db.Column(db.Integer, db.ForeignKey('recipe.id'))
     
+    def __init__(self, user_id,date,breakfast_recipe_id,lunch_recipe_id,dinner_recipe_id):        
+        self.user_id = user_id,
+        self.date = date,
+        self.breakfast_recipe_id = breakfast_recipe_id,
+        self.lunch_recipe_id = lunch_recipe_id,
+        self.dinner_recipe_id = dinner_recipe_id
+    
+    
     def update(self,d):
         for k,v in d.items():
             getattr(self,k)
             setattr(self,k,v)
+            
+            
 
 class RecipeBox(db.Model):
     user_id = db.Column(db.String(100), db.ForeignKey('user.id'), primary_key=True)
     recipe_id = db.Column(db.Integer, db.ForeignKey('recipe.id'), primary_key=True)
     custom_instr = db.Column(db.String(3000), default=None)
-    scheduled = db.Column(db.Boolean, default=True, nullable=False)
+    # schedule: whether to consider for schduling
+    schedule = db.Column(db.Boolean, default=True, nullable=False)  
     fixed_schedule = db.Column(db.Boolean, default=False, nullable=False)
     fixed_period = db.Column(db.SmallInteger)
     rating = db.Column(db.SmallInteger)
@@ -225,10 +236,10 @@ class RecipeBox(db.Model):
     last_made = db.Column(db.DateTime)
     
     def __init__(self,user_id, recipe_id, 
-                 scheduled=True, fixed_schedule=False, fixed_period=14):
+                 schedule=True, fixed_schedule=False, fixed_period=14):
         self.user_id = user_id
         self.recipe_id = recipe_id
-        self.scheduled = scheduled
+        self.schedule = schedule
         self.fixed_schedule = fixed_schedule
         self.fixed_period = fixed_period
     
@@ -242,7 +253,7 @@ class RecipeBox(db.Model):
             'user_id': self.user_id,
             'recipe_id': self.recipe_id,
             'custom_instr': self.custom_instr,
-            'scheduled': self.scheduled,
+            'schedule': self.schedule,
             'fixed_schedule': self.fixed_schedule,
             'fixed_period': self.fixed_period,   
             'rating': self.rating,

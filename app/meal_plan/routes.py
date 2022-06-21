@@ -1,14 +1,19 @@
+from datetime import date
 from flask import jsonify, Blueprint, request as r
-from app.models import db, User, Schedule
+from app.models import Day, RecipeBox, db, User, Schedule
+import re
+from random import choices
 
-schedule= Blueprint('schedule',__name__, url_prefix='/api/v1/schedule')
+from app.services import calc_weights, updateMealplan
 
-@schedule.route('/test', methods=['GET'])
+meal_plan= Blueprint('meal_plan',__name__, url_prefix='/api/v1/meal_plan')
+
+@meal_plan.route('/test', methods=['GET'])
 def test():
     print('api test running')
     return jsonify({"test result": "passed"}), 200
 
-@schedule.route('/<string:id>/create', methods=['POST'])
+@meal_plan.route('/<string:id>/schedule/create', methods=['POST'])
 def create_schedule(id):
     user = User.query.get(id)
     new_schedule = r.get_json()
@@ -33,3 +38,11 @@ def create_schedule(id):
     
     return jsonify({'message': 'Schedule created'}), 201
 
+@meal_plan.route('/<string:id>', methods=['POST'])
+def get_meal_plan():
+    
+    updateMealplan(id)
+    
+    meal_plan = Day.query.filter_by(user_id=id).all()
+    
+    return jsonify({'meal_plan': meal_plan}), 200
