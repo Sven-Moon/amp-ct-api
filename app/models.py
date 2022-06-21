@@ -64,7 +64,6 @@ class Recipe(db.Model):
     instructions = db.Column(db.String(3000))
     category = db.Column(db.String(30))
     meal_types = db.Column(db.Integer)
-    last_made = db.Column(db.DateTime)
     image = db.Column(db.String(500))
     rating = db.Column(db.SmallInteger)
     rating_count = db.Column(db.SmallInteger, default=0)
@@ -80,7 +79,6 @@ class Recipe(db.Model):
         self.instructions = r.setdefault('instructions','')
         self.category = r.setdefault('category','')
         self.meal_types = r.setdefault('meal_types',None)
-        self.last_made = r.setdefault('last_made',None)
         self.image = r.setdefault('image',None)
         self.rating = r.setdefault('rating',None)
         self.rating_count = r.setdefault('rating_count',0)
@@ -225,6 +223,7 @@ class RecipeBox(db.Model):
         self.fixed_period = fixed_period    
         self.rating = None
         self.cost_rating = None 
+        last_made = db.Column(db.DateTime)
     
     def update(self,d):
         for k,v in d.items():
