@@ -95,7 +95,11 @@ class Recipe(db.Model):
             "category":self.category,
             "meal_types":self.meal_types,
             "created_by":self.created_by,
-            "image": self.image
+            "image": self.image,
+            "rating": self.rating,
+            "rating_count": self.rating_count,
+            "average_cost_rating": self.average_cost_rating,
+            "created_by": self.created_by,
         }
     def to_dict_w_ingredients(self):
         return {
@@ -108,7 +112,12 @@ class Recipe(db.Model):
             "meal_types":self.meal_types,
             "created_by":self.created_by,
             "image": self.image,
-            "ingredients": self.ingredients
+            "rating": self.rating,
+            "rating_count": self.rating_count,
+            "average_cost_rating": self.average_cost_rating,
+            "created_by": self.created_by,
+            "ingredients": self.ingredients,
+            
         }
         
     def update(self,d):
@@ -213,6 +222,7 @@ class RecipeBox(db.Model):
     fixed_period = db.Column(db.SmallInteger)
     rating = db.Column(db.SmallInteger)
     cost_rating = db.Column(db.SmallInteger)
+    last_made = db.Column(db.DateTime)
     
     def __init__(self,user_id, recipe_id, 
                  scheduled=True, fixed_schedule=False, fixed_period=14):
@@ -220,10 +230,7 @@ class RecipeBox(db.Model):
         self.recipe_id = recipe_id
         self.scheduled = scheduled
         self.fixed_schedule = fixed_schedule
-        self.fixed_period = fixed_period    
-        self.rating = None
-        self.cost_rating = None 
-        last_made = db.Column(db.DateTime)
+        self.fixed_period = fixed_period
     
     def update(self,d):
         for k,v in d.items():
@@ -239,7 +246,8 @@ class RecipeBox(db.Model):
             'fixed_schedule': self.fixed_schedule,
             'fixed_period': self.fixed_period,   
             'rating': self.rating,
-            'cost_rating': self.cost_rating}
+            'cost_rating': self.cost_rating,
+            'last_made': self.last_made}
 
 class RecipeIngredient(db.Model):
     recipe_id = db.Column(db.Integer, db.ForeignKey('recipe.id'), primary_key=True)
