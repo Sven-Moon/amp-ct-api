@@ -39,7 +39,7 @@ def create_schedule(id):
     return jsonify({'message': 'Schedule created'}), 201
 
 @meal_plan.route('/<string:id>', methods=['POST'])
-def get_meal_plan():
+def get_meal_plan(id):
     
     updateMealplan(id)
     

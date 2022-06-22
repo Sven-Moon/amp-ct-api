@@ -62,9 +62,9 @@ class Recipe(db.Model):
     prep_time = db.Column(db.Integer, default=0)
     cook_time = db.Column(db.Integer, default=0)
     instructions = db.Column(db.String(3000))
-    category = db.Column(db.String(30))
-    meal_types = db.Column(db.String(10))
-    image = db.Column(db.String(500))
+    meat_options = db.Column(db.String(30), nullable=False)
+    meal_types = db.Column(db.String(10), nullable=False)
+    image = db.Column(db.String(500), default='https://res.cloudinary.com/sventerprise/image/upload/v1655841862/CT-amp/mysterydish_kfahbt.jpg')
     rating = db.Column(db.SmallInteger)
     rating_count = db.Column(db.SmallInteger, default=0)
     average_cost_rating = db.Column(db.String(3), default="1")    
@@ -77,9 +77,9 @@ class Recipe(db.Model):
         self.prep_time = r.setdefault('prep_time',0)
         self.cook_time = r.setdefault('cook_time',0)
         self.instructions = r.setdefault('instructions','')
-        self.category = r.setdefault('category','')
-        self.meal_types = r.setdefault('meal_types',None)
-        self.image = r.setdefault('image',None)
+        self.meat_options = r.setdefault('meat_options','')
+        self.meal_types = r.setdefault('meal_types','123')
+        self.image = r.setdefault('image','https://res.cloudinary.com/sventerprise/image/upload/v1655841862/CT-amp/mysterydish_kfahbt.jpg')
         self.rating = r.setdefault('rating',None)
         self.rating_count = r.setdefault('rating_count',0)
         self.average_cost_rating = r.setdefault('average_cost_rating',None)
@@ -92,7 +92,7 @@ class Recipe(db.Model):
             "prep_time": self.prep_time,
             "cook_time":self.cook_time,
             "instructions":self.instructions,
-            "category":self.category,
+            "meat_options":self.meat_options,
             "meal_types":self.meal_types,
             "created_by":self.created_by,
             "image": self.image,
@@ -108,7 +108,7 @@ class Recipe(db.Model):
             "prep_time": self.prep_time,
             "cook_time":self.cook_time,
             "instructions":self.instructions,
-            "category":self.category,
+            "meat_options":self.meat_options,
             "meal_types":self.meal_types,
             "created_by":self.created_by,
             "image": self.image,
@@ -158,7 +158,7 @@ class Schedule(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     user_id = db.Column(db.String(100), db.ForeignKey("user.id"))
     # meal frequencies
-    veg_freq = db.Column(db.SmallInteger, default=3)
+    vegetarian_freq = db.Column(db.SmallInteger, default=3)
     pork_freq = db.Column(db.SmallInteger, default=3)
     chicken_freq = db.Column(db.SmallInteger, default=3)
     beef_freq = db.Column(db.SmallInteger, default=3)
@@ -234,11 +234,15 @@ class RecipeBox(db.Model):
     rating = db.Column(db.SmallInteger)
     cost_rating = db.Column(db.SmallInteger)
     last_made = db.Column(db.DateTime)
+    custom_meal_types = db.Column(db.String(10), nullable=False)
+    custom_meat_options = db.Column(db.String(30), nullable=False)
     
-    def __init__(self,user_id, recipe_id, 
+    def __init__(self,user_id, recipe_id, meal_types, meat_options,
                  schedule=True, fixed_schedule=False, fixed_period=14):
         self.user_id = user_id
         self.recipe_id = recipe_id
+        self.custom_meal_types = meal_types
+        self.custom_meat_options = meat_options
         self.schedule = schedule
         self.fixed_schedule = fixed_schedule
         self.fixed_period = fixed_period
@@ -253,6 +257,7 @@ class RecipeBox(db.Model):
             'user_id': self.user_id,
             'recipe_id': self.recipe_id,
             'custom_instr': self.custom_instr,
+            'custom_meal_types': self.custom_meal_types,
             'schedule': self.schedule,
             'fixed_schedule': self.fixed_schedule,
             'fixed_period': self.fixed_period,   

@@ -4,6 +4,7 @@ from sqlalchemy import func
 from app.models import Ingredient, RecipeBox, RecipeIngredient, db, Recipe, User
 from app.services import get_recipe_ingredients
 from sqlalchemy.exc import SQLAlchemyError
+from sqlalchemy.exc import SQLAlchemyError
 
 
 recipes= Blueprint('recipes',__name__, url_prefix='/api/v1/recipes')
@@ -50,8 +51,10 @@ def get_user_recipes(username):
         user_recipe_obj = user_recipes[i] 
         recipe = recipe_obj.to_dict_w_ingredients()
         
+        recipe['custom_meal_types'] = user_recipe_obj.custom_instr
+        recipe['custom_meat_options'] = user_recipe_obj.custom_meat_options
         recipe['custom_instr'] = user_recipe_obj.custom_instr
-        recipe['scheduled'] = user_recipe_obj.scheduled
+        recipe['schedule'] = user_recipe_obj.schedule
         recipe['fixed_schedule'] = user_recipe_obj.fixed_schedule
         recipe['fixed_period'] = user_recipe_obj.fixed_period
         recipe['rating'] = user_recipe_obj.rating
@@ -98,7 +101,7 @@ def recipe_search():
     print(filters)
     prep_time = filters['prep_time'] if filters['prep_time'] else 999
     cook_time = filters['cook_time'] if filters['cook_time'] else 999
-    categories = filters['categories'] if filters['categories'] else ['vegetarian', 'pork', 'fish', 'beef', 'chicken']   
+    meat_options = filters['meat_options'] if filters['meat_options'] else ['vegetarian', 'pork', 'fish', 'beef', 'chicken']   
     last_made = filters['last_made'] if filters['last_made'] else 0
     filters['meal_types'] = f'[filters.meal_types]' #regex
     if ['last_made']:
@@ -111,7 +114,7 @@ def recipe_search():
     # results = Recipe.query.filter(Recipe.created_by==filters['created_by'],
                         #    Recipe.prep_time <= prep_time,
                         #    Recipe.cook_time <= cook_time,
-                        #    Recipe.category.in_(categories),
+                        #    Recipe.meat_options.in_(meat_options),
                         #    Recipe.meal_types.regex_match(filters.meal_types),
                         #    Recipe.last_made <= cutoff
                         #    )
@@ -170,10 +173,9 @@ def create_recipe():
             db.session.add(recipeIngredient)
         db.session.commit()
         
-        # TODO: add to user's recipebox
         try:
             user_id = User.query.filter_by(username=recipe.created_by).first().id          
-            userRecipe = RecipeBox(user_id, recipe.id)
+            userRecipe = RecipeBox(user_id, recipe.id, recipe.meal_types, recipe.meat_options)
             db.session.add(userRecipe)                       
             db.session.commit()
         except SQLAlchemyError as e:
@@ -222,13 +224,21 @@ def add_recipe_to_recipebox(username,recipe_id):
     print(recipe_id)
     try: 
         opts = r.get_json()
-        username = username.lower()
-        user_id = User.query.filter(func.lower(username)==username.lower()).first().id
+        # username = username.lower()
+        print(username)
+        user_id = User.query.filter(User.username==username).first().id
+        print(user_id)
+        recipe = Recipe.query.get(recipe_id)
+        if not opts['custom_meal_types']: 
+            opts['custom_meal_types'] = str(recipe.meal_types)
+        if not opts['custom_meat_options']: 
+            opts['custom_meat_options'] = str(recipe.meat_options)
+        print(recipe.meat_options)
     except:
         return jsonify({'message': 'Error: User could not be found'}), 400
     # use user_id & recipe_id to create entry
     try:
-        user_recipe = RecipeBox(user_id, recipe_id, opts['scheduled'], opts['fixed_schedule'], opts['fixed_period'])
+        user_recipe = RecipeBox(user_id, recipe_id, opts['custom_meal_types'], opts['custom_meat_options'], opts['schedule'], opts['fixed_schedule'], opts['fixed_period'])
     except:
         return jsonify({'message': 'Error: User return bad data'}), 400
     try:
@@ -245,11 +255,8 @@ def remove_recipe_from_recipebox(username,recipe_id):
     print(username)
     print(recipe_id)
     try: 
-        print('try0')
         opts = r.get_json()
-        print('try1')
-        username = username.lower()
-        user_id = User.query.filter(func.lower(username)==username.lower()).first().id
+        user_id = User.query.filter(User.username==username).first().id
     except:
         return jsonify({'message': 'Error: User could not be found'}), 400
     # use user_id & recipe_id to create entry

@@ -6,6 +6,7 @@ from app.models import Ingredient, RecipeIngredient, db
 import numpy as np
 import re
 from random import choices
+from sqlalchemy.exc import SQLAlchemyError
 
 def token_required(api_route):
     @wraps(api_route)
@@ -39,7 +40,7 @@ def get_recipe_ingredients(recipe_id):
     
     return ingredients
 
-def calc_weights(recipe_ids, recipes, schedule):
+def calc_weights(recipe_ids, userRecipes, schedule):
     # recipe_ids = [int] # recipes: [<Recipe>]
     """Creates a weight for each recipe based on 3 things:
     1) time since last made
@@ -53,19 +54,20 @@ def calc_weights(recipe_ids, recipes, schedule):
     recipe_obj_dict = {}
     weights = []
     
-    for r in recipes:
-        
-        recipe_obj_dict[r.id] = r
+    for r in userRecipes:        
+        recipe_obj_dict[r.recipe_id] = r
         if r.last_made:
             dates_last_made.append(r.last_made)
             
+    print(dates_last_made)
+    if dates_last_made:
     # split last made dates into quartiles (never made will be 5th)
-    quartiles = np.quantile(dates_last_made, [0.25, 0.5,0.75])
+        quartiles = np.quantile(dates_last_made, [0.25, 0.5,0.75])
                 
     for id in recipe_ids:
         # determine category value
         category = recipe_obj_dict[id].category
-        category_value = schedule[category+'freq']
+        category_value = schedule[category+'_freq']
         # determine time since last made value
         time_value = 3
         last_made = recipe_obj_dict[id].last_made
@@ -87,8 +89,9 @@ def calc_weights(recipe_ids, recipes, schedule):
         
 def updateMealplan(id):
     today = date.today()
-    recipes = RecipeBox.filter(RecipeBox.user_id==id, 
+    user_recipes = RecipeBox.query.filter(RecipeBox.user_id==id, 
                                RecipeBox.schedule==True).all()
+    print(user_recipes)
     #recipes = [<RecipeBox>]
     unscheduled_breakfast = []
     unscheduled_lunch = []
@@ -113,45 +116,55 @@ def updateMealplan(id):
     
     # create list of b/l/d unscheduled
     try:
-        for recipe in recipes:
-            # recipe: <Recipe>
-            if recipe.recipe_id not in scheduled_recipes_set:
-                if re.search('[1]',recipe.meal_type):
-                    unscheduled_breakfast.append(recipe.id)
-                if re.search('[2]',recipe.meal_type):
-                    unscheduled_lunch.append(recipe.id)
-                if re.search('[3]',recipe.meal_type):
-                    unscheduled_dinner.append(recipe.id)
-    except:
-        return jsonify({'message': 'error parsing unscheduled meal types'}), 500
+        print("recipes",user_recipes)
+        for user_recipe in user_recipes:
+            # recipe: <RecipeBox>
+            print(user_recipe.to_dict())
+            if user_recipe.recipe_id not in scheduled_recipes_set:
+                print('custom_meal_types',user_recipe.custom_meal_types)
+                if re.search('[1]',user_recipe.custom_meal_types):
+                    unscheduled_breakfast.append(user_recipe.recipe_id)
+                if re.search('[2]',user_recipe.custom_meal_types):
+                    unscheduled_lunch.append(user_recipe.recipe_id)
+                if re.search('[3]',user_recipe.custom_meal_types):
+                    unscheduled_dinner.append(user_recipe.recipe_id)
+
+
+    except SQLAlchemyError as e:
+        error = str(e.__dict__['orig'])
+        return error
             
     # DETERMINE DAYS NEEDED TO SCHEDULE
-    max_date_scheduled = max([day.date for day in days], today) 
-    days_scheduled = (max_date_scheduled - today).day
-    days_to_schedule = Schedule.plan_ahead_days - days_scheduled
+    if days:
+        max_date_scheduled = max(max([day.date for day in days]) , today)
+        days_scheduled = (max_date_scheduled - today).day
+        days_to_schedule = schedule.plan_ahead_days - days_scheduled
+    else: 
+        days_to_schedule = schedule.plan_ahead_days
+        max_date_scheduled = date.today() - timedelta(1)
     # SELECT RECIPES FOR DAYS TO SCHEDULE & PACK INTO DAY()
     for i in range(days_to_schedule):
-        date = max_date_scheduled + 1 + i
+        day_date = max_date_scheduled + timedelta(1 + i)
         # breakfast
         breakfast_recipe_id = choices(
             unscheduled_breakfast, 
-            calc_weights(unscheduled_breakfast, recipes, schedule), 
+            calc_weights(unscheduled_breakfast, user_recipes, schedule), 
             k=1)
         unscheduled_breakfast.remove(breakfast_recipe_id)
         # lunch 
         lunch_recipe_id = choices(
             unscheduled_lunch, 
-            calc_weights(unscheduled_lunch, recipes, schedule), 
+            calc_weights(unscheduled_lunch, user_recipes, schedule), 
             k=1)
         unscheduled_lunch.remove(lunch_recipe_id)
         # dinner 
         dinner_recipe_id = choices(
             unscheduled_dinner, 
-            calc_weights(unscheduled_dinner, recipes, schedule), 
+            calc_weights(unscheduled_dinner, user_recipes, schedule), 
             k=1)
         unscheduled_dinner.remove(dinner_recipe_id)
         # pack & add
-        day = Day(id, date, breakfast_recipe_id, lunch_recipe_id, dinner_recipe_id)    
+        day = Day(id, day_date, breakfast_recipe_id, lunch_recipe_id, dinner_recipe_id)    
         db.session.add()
     # commit
     db.session.commit()
