@@ -180,13 +180,13 @@ class Schedule(db.Model):
     
     def __init__(self, schedule) -> None:
         self.user_id: schedule.setDefault('user_id',None)
-        self.veg_freq: schedule.setDefault('veg_freq',None)
-        self.pork_freq: schedule.setDefault('pork_freq',None)
-        self.chicken_freq: schedule.setDefault('chicken_freq',None)
-        self.beef_freq: schedule.setDefault('beef_freq',None)
-        self.fish_freq: schedule.setDefault('fish_freq',None)
-        self.auto_made: schedule.setDefault('auto_made',None)
-        self.store_trip_method: schedule.setDefault('store_trip_method',None)
+        self.vegetarian_freq: schedule.setDefault('vegetarian_freq',3)
+        self.pork_freq: schedule.setDefault('pork_freq',3)
+        self.chicken_freq: schedule.setDefault('chicken_freq',3)
+        self.beef_freq: schedule.setDefault('beef_freq',3)
+        self.fish_freq: schedule.setDefault('fish_freq',3)
+        self.auto_made: schedule.setDefault('auto_made',True)
+        self.store_trip_method: schedule.setDefault('store_trip_method',1)
         self.store_days_btwn: schedule.setDefault('store_days_btwn',None)
         self.store_trip_days: schedule.setDefault('store_trip_days',None)
         self.store_meal_position: schedule.setDefault('store_meal_position',None)
@@ -195,6 +195,25 @@ class Schedule(db.Model):
         self.plan_breakfast: schedule.setDefault('plan_breakfast',None)
         self.plan_lunch: schedule.setDefault('plan_lunch',None)
         self.plan_dinner: schedule.setDefault('plan_dinner',None)
+    
+    def to_dict(self):
+        return {"id": self.id,
+        "user_id": self.user_id,
+        "vegetarian_freq": self.vegetarian_freq,
+        "pork_freq": self.pork_freq,
+        "chicken_freq": self.chicken_freq,
+        "beef_freq": self.beef_freq,
+        "fish_freq": self.fish_freq,
+        "auto_made": self.auto_made,
+        "store_trip_method": self.store_trip_method,
+        "store_days_btwn": self.store_days_btwn,
+        "store_trip_days": self.store_trip_days,
+        "store_meal_position": self.store_meal_position,
+        "plan_ahead_days": self.plan_ahead_days,
+        "next_store_trip": self.next_store_trip,
+        "plan_breakfast": self.plan_breakfast,
+        "plan_lunch": self.plan_lunch,
+        "plan_dinner": self.plan_dinner}
     
     def update(self,d):
         for k,v in d.items():
@@ -221,8 +240,14 @@ class Day(db.Model):
             getattr(self,k)
             setattr(self,k,v)
             
-            
-
+    def to_dict(self):
+        return {
+            "user_id": self.user_id,
+            "date": self.date,
+            "breakfast_recipe_id": self.breakfast_recipe_id,
+            "lunch_recipe_id": self.lunch_recipe_id,
+            "dinner_recipe_id": self.dinner_recipe_id}
+        
 class RecipeBox(db.Model):
     user_id = db.Column(db.String(100), db.ForeignKey('user.id'), primary_key=True)
     recipe_id = db.Column(db.Integer, db.ForeignKey('recipe.id'), primary_key=True)

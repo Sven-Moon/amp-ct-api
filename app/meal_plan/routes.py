@@ -44,5 +44,6 @@ def get_meal_plan(id):
     updateMealplan(id)
     
     meal_plan = Day.query.filter_by(user_id=id).all()
+    meal_plan_list = [meal.to_dict() for meal in meal_plan ]
     
-    return jsonify({'meal_plan': meal_plan}), 200
+    return jsonify({'meal_plan': meal_plan_list}), 200
