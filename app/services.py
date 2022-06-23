@@ -1,7 +1,7 @@
 from datetime import date, timedelta
 from functools import wraps
 from flask import jsonify, request
-from app.models import Day, RecipeBox, Schedule, User
+from app.models import Day, Recipe, RecipeBox, Schedule, User
 from app.models import Ingredient, RecipeIngredient, db
 import numpy as np
 import re
@@ -143,6 +143,7 @@ def updateMealplan(id):
         # will have to undo your earlier sorting into BLD
     # SELECT RECIPES FOR DAYS TO SCHEDULE & PACK INTO DAY()
     for i in range(days_to_schedule):
+        print("i",i,"unscheduled_breakfast",unscheduled_breakfast)
         day_date = max_date_scheduled + timedelta(1 + i)
         # breakfast
         breakfast_recipe_id = choices(
@@ -167,3 +168,30 @@ def updateMealplan(id):
         db.session.add(day)
     # commit
     db.session.commit()
+    
+    
+def getRecipeBoxByUserId(user_id):
+    user_recipes = RecipeBox.query.filter_by(user_id=user_id).all()
+    # shape: [UserRecipe_obj] user/recipe ids, scheduling & custom recipe fields    
+    # get the recipe data from recipes table
+    recipe_ids = [ur.recipe_id for ur in user_recipes] #[int, ...]
+    recipe_obj_list = Recipe.query.filter(Recipe.id.in_(recipe_ids)).all()
+    # shape: [Recipe_obj]
+    # create & fill list of recipes that fills in info from both
+    recipes = []
+    for i, recipe_obj in enumerate(recipe_obj_list):
+        recipe_obj.ingredients = get_recipe_ingredients(recipe_obj.id)
+        user_recipe_obj = user_recipes[i] 
+        recipe = recipe_obj.to_dict_w_ingredients()
+        
+        recipe['custom_meal_types'] = user_recipe_obj.custom_instr
+        recipe['custom_meat_options'] = user_recipe_obj.custom_meat_options
+        recipe['custom_instr'] = user_recipe_obj.custom_instr
+        recipe['schedule'] = user_recipe_obj.schedule
+        recipe['fixed_schedule'] = user_recipe_obj.fixed_schedule
+        recipe['fixed_period'] = user_recipe_obj.fixed_period
+        recipe['rating'] = user_recipe_obj.rating
+        recipe['cost_rating'] = user_recipe_obj.cost_rating
+        recipes.append(recipe) 
+        
+    return recipes

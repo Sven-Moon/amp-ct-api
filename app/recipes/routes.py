@@ -1,8 +1,9 @@
 from datetime import datetime, timedelta
+from distutils.dep_util import newer_group
 from flask import jsonify, Blueprint, request as r
 from sqlalchemy import func
 from app.models import Ingredient, RecipeBox, RecipeIngredient, db, Recipe, User
-from app.services import get_recipe_ingredients
+from app.services import get_recipe_ingredients, getRecipeBoxByUserId
 from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.exc import SQLAlchemyError
 
@@ -29,39 +30,6 @@ def get_recipes():
         
     return jsonify({"recipes": [r.to_dict() for r in recipes ]}), 200
 
-@recipes.route('/recipebox/<string:username>', methods=['POST'])
-def get_user_recipes(username):
-    
-    try:
-        # get user_id: 
-        user_id = User.query.filter_by(username=username).first().id
-    except:
-        return jsonify({'message': 'Error: user not found'}), 401
-    # find all the recipe ids in user-recipe
-    user_recipes = RecipeBox.query.filter_by(user_id=user_id).all()
-    # shape: [UserRecipe_obj] user/recipe ids, scheduling & custom recipe fields    
-    # get the recipe data from recipes table
-    recipe_ids = [ur.recipe_id for ur in user_recipes] #[int, ...]
-    recipe_obj_list = Recipe.query.filter(Recipe.id.in_(recipe_ids)).all()
-    # shape: [Recipe_obj]
-    # create & fill list of recipes that fills in info from both
-    recipes = []
-    for i, recipe_obj in enumerate(recipe_obj_list):
-        recipe_obj.ingredients = get_recipe_ingredients(recipe_obj.id)
-        user_recipe_obj = user_recipes[i] 
-        recipe = recipe_obj.to_dict_w_ingredients()
-        
-        recipe['custom_meal_types'] = user_recipe_obj.custom_instr
-        recipe['custom_meat_options'] = user_recipe_obj.custom_meat_options
-        recipe['custom_instr'] = user_recipe_obj.custom_instr
-        recipe['schedule'] = user_recipe_obj.schedule
-        recipe['fixed_schedule'] = user_recipe_obj.fixed_schedule
-        recipe['fixed_period'] = user_recipe_obj.fixed_period
-        recipe['rating'] = user_recipe_obj.rating
-        recipe['cost_rating'] = user_recipe_obj.cost_rating
-        recipes.append(recipe)       
-    
-    return jsonify({'recipes': recipes})
 
 @recipes.route('/<string:username>', methods=['GET'])
 def get_recipes_by_user(username):
@@ -81,7 +49,6 @@ def get_recipes_by_user(username):
 
 @recipes.route('/search', methods=['POST'])
 def recipe_search():
-    print(r.get_json())
     try:
         filters = r.get_json()
     except:
@@ -98,7 +65,6 @@ def recipe_search():
         queries.append(Recipe.created_by!=filters['username'])
     
     print('hit recipe search')
-    print(filters)
     prep_time = filters['prep_time'] if filters['prep_time'] else 999
     cook_time = filters['cook_time'] if filters['cook_time'] else 999
     meat_options = filters['meat_options'] if filters['meat_options'] else ['vegetarian', 'pork', 'fish', 'beef', 'chicken']   
@@ -131,14 +97,21 @@ def recipe_search():
 def create_recipe():
     # BUILD THE RECIPE
     try:
-        new_recipe = r.get_json()    
+        new_recipe = r.get_json()
+        # CONVERT MEAL TYPES TO USEABLE STRING
+        meal_types = ''
+        if new_recipe['meal_types']['breakfast']: meal_types += '1'
+        if new_recipe['meal_types']['lunch']: meal_types += '2'
+        if new_recipe['meal_types']['dinner']: meal_types += '3'
+        # end convert
+        new_recipe['meal_types'] = meal_types         
         recipe = Recipe(new_recipe)
     except:
         return({'message': 'Error: Bad data shape provided'}), 400
     # check for user having same named recipe
     user_recipe_exists = Recipe.query.filter(
         func.lower(Recipe.name)==recipe.name.lower().strip(),
-        func.lower(Recipe.created_by)==recipe.created_by.lower()).first()
+        func.lower(Recipe.created_by)==recipe.created_by).first()
     if user_recipe_exists:
         return({'message': 'Error: User recipe with this name already exists'}), 400        
     try:    
@@ -216,18 +189,27 @@ def delete_recipe(id):
     return jsonify({'success': f'deleted recipe, id:{id}'}), 204
 
 # RECIPEBOX
+@recipes.route('/recipebox/<string:username>', methods=['POST'])
+def get_user_recipes(username):
+    
+    try:
+        # get user_id: 
+        user_id = User.query.filter_by(username=username).first().id
+    except:
+        return jsonify({'message': 'Error: user not found'}), 401
+    # find all the recipe ids in user-recipe
+    recipe_box = getRecipeBoxByUserId(user_id)     
+    
+    return jsonify({'recipes': recipe_box}), 200
+
 @recipes.route('/recipebox/<string:username>/add/<int:recipe_id>', methods=['POST'])
 def add_recipe_to_recipebox(username,recipe_id):
     
     # get  user id
-    print(username)
-    print(recipe_id)
     try: 
         opts = r.get_json()
         # username = username.lower()
-        print(username)
         user_id = User.query.filter(User.username==username).first().id
-        print(user_id)
         recipe = Recipe.query.get(recipe_id)
         if not opts['custom_meal_types']: 
             opts['custom_meal_types'] = str(recipe.meal_types)
@@ -246,16 +228,15 @@ def add_recipe_to_recipebox(username,recipe_id):
         db.session.commit()
     except:
         return jsonify({'message': 'Error: User recipe could not be added'}), 500
+    
+    recipe_box = getRecipeBoxByUserId(user_id)
             
-    return jsonify({'message': 'User recipe added'}), 201
+    return jsonify({'recipes': recipe_box}), 200
 
 @recipes.route('/recipebox/<string:username>/remove/<int:recipe_id>', methods=['DELETE'])
 def remove_recipe_from_recipebox(username,recipe_id):    
     # get  user id
-    print(username)
-    print(recipe_id)
     try: 
-        opts = r.get_json()
         user_id = User.query.filter(User.username==username).first().id
     except:
         return jsonify({'message': 'Error: User could not be found'}), 400
@@ -270,5 +251,7 @@ def remove_recipe_from_recipebox(username,recipe_id):
     except:
         return jsonify({'message': 'Error: Recipe was found but could not be removed'}), 500
             
-    return jsonify({'message': 'User recipe added'}), 201
+    return jsonify({'message': 'User recipe removed'}), 201
+
+
 

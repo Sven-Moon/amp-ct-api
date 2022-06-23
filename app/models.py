@@ -171,7 +171,7 @@ class Schedule(db.Model):
     store_trip_days = db.Column(db.SmallInteger, default=6)
         # value format: "1" (Monday), "7" (Sunday), "25"(Tuesday, Friday)
     store_meal_position = db.Column(db.String(10), default="After")
-    plan_ahead_days = db.Column(db.SmallInteger, default=14)
+    plan_ahead_days = db.Column(db.SmallInteger, default=7)
     next_store_trip = db.Column(db.DateTime)
     # what to plan
     plan_breakfast = db.Column(db.Boolean, default=True)
@@ -190,7 +190,7 @@ class Schedule(db.Model):
         self.store_days_btwn: schedule.setDefault('store_days_btwn',None)
         self.store_trip_days: schedule.setDefault('store_trip_days',None)
         self.store_meal_position: schedule.setDefault('store_meal_position',None)
-        self.plan_ahead_days: schedule.setDefault('plan_ahead_days',None)
+        self.plan_ahead_days: schedule.setDefault('plan_ahead_days',7)
         self.next_store_trip: schedule.setDefault('next_store_trip',None)
         self.plan_breakfast: schedule.setDefault('plan_breakfast',None)
         self.plan_lunch: schedule.setDefault('plan_lunch',None)
