@@ -1,5 +1,7 @@
 from flask import Flask
 import os
+matplotlib.use('Agg')
+import matplotlib 
 from config import Config
 from .models import db
 from flask_migrate import Migrate
@@ -8,6 +10,7 @@ from .recipes.routes import recipes
 from .meal_plan.routes import meal_plan
 from flask_cors import CORS
 import stripe
+
 
 stripe.api_key = 'sk_test_51LAQTdJvxpEoTgBTUcxBvsb3HLNl7nsVl3r75XEmlzsR3zShyv34m3VtZ2vObJWe9Vkz6kPnwkIknElSssAewlbl00AVuisEhJ'
 
