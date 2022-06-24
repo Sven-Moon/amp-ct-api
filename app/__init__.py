@@ -1,6 +1,5 @@
 from flask import Flask
 import os
-matplotlib.use('Agg')
 import matplotlib 
 from config import Config
 from .models import db
