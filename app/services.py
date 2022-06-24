@@ -169,7 +169,6 @@ def updateMealplan(id):
     # commit
     db.session.commit()
     
-    
 def getRecipeBoxByUserId(user_id):
     user_recipes = RecipeBox.query.filter_by(user_id=user_id).all()
     # shape: [UserRecipe_obj] user/recipe ids, scheduling & custom recipe fields    

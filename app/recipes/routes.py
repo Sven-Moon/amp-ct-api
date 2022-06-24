@@ -30,7 +30,6 @@ def get_recipes():
         
     return jsonify({"recipes": [r.to_dict() for r in recipes ]}), 200
 
-
 @recipes.route('/<string:username>', methods=['GET'])
 def get_recipes_by_user(username):
     print('getting user')
@@ -67,7 +66,16 @@ def recipe_search():
     print('hit recipe search')
     prep_time = filters['prep_time'] if filters['prep_time'] else 999
     cook_time = filters['cook_time'] if filters['cook_time'] else 999
-    meat_options = filters['meat_options'] if filters['meat_options'] else ['vegetarian', 'pork', 'fish', 'beef', 'chicken']   
+    # meat_options: { option: bool, ... } -> [option(str),...]
+    meat_options = []
+    for k,v in filters['meat_options'].items():
+        if v: meat_options.append(k)
+    if len(meat_options) != len(filters['meat_options']):
+        queries.append(Recipe.meat_options.in_(meat_options))
+    print(meat_options)
+    print(len(meat_options) != len(filters['meat_options']))
+    
+            
     last_made = filters['last_made'] if filters['last_made'] else 0
     filters['meal_types'] = f'[filters.meal_types]' #regex
     if ['last_made']:
@@ -75,6 +83,9 @@ def recipe_search():
         cutoff = current_time - timedelta(days=last_made)
     else:
         cutoff = datetime.utcnow()
+    print('queries')
+    for q in queries:
+        print(q)
     
     results = Recipe.query.filter(*queries).all()
     # results = Recipe.query.filter(Recipe.created_by==filters['created_by'],
@@ -89,6 +100,8 @@ def recipe_search():
     
     for recipe in results:
         recipe.ingredients = get_recipe_ingredients(recipe.id)
+        
+    print([recipe.to_dict_w_ingredients() for recipe in results])
                            
     
     return jsonify({'recipes': [recipe.to_dict_w_ingredients() for recipe in results]}), 200
