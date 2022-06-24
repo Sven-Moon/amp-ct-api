@@ -54,7 +54,7 @@ def calc_weights(recipe_ids, userRecipes, schedule):
     recipe_obj_dict = {}
     weights = []
     
-    for r in userRecipes:        
+    for r in userRecipes:
         recipe_obj_dict[r.recipe_id] = r
         if r.last_made:
             dates_last_made.append(r.last_made)
@@ -143,7 +143,6 @@ def updateMealplan(id):
         # will have to undo your earlier sorting into BLD
     # SELECT RECIPES FOR DAYS TO SCHEDULE & PACK INTO DAY()
     for i in range(days_to_schedule):
-        print("i",i,"unscheduled_breakfast",unscheduled_breakfast)
         day_date = max_date_scheduled + timedelta(1 + i)
         # breakfast
         breakfast_recipe_id = choices(

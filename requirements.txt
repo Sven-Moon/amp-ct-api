@@ -9,11 +9,13 @@ Flask-DotEnv==0.1.2
 Flask-Migrate==3.1.0
 Flask-SQLAlchemy==2.5.1
 greenlet==1.1.2
+gunicorn==20.1.0
 idna==3.3
 itsdangerous==2.1.2
 Jinja2==3.1.2
 Mako==1.2.0
 MarkupSafe==2.1.1
+numpy==1.22.4
 psycopg2==2.9.3
 python-dateutil==2.8.2
 python-dotenv==0.20.0

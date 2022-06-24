@@ -72,8 +72,6 @@ def recipe_search():
         if v: meat_options.append(k)
     if len(meat_options) != len(filters['meat_options']):
         queries.append(Recipe.meat_options.in_(meat_options))
-    print(meat_options)
-    print(len(meat_options) != len(filters['meat_options']))
     
             
     last_made = filters['last_made'] if filters['last_made'] else 0
@@ -83,9 +81,6 @@ def recipe_search():
         cutoff = current_time - timedelta(days=last_made)
     else:
         cutoff = datetime.utcnow()
-    print('queries')
-    for q in queries:
-        print(q)
     
     results = Recipe.query.filter(*queries).all()
     # results = Recipe.query.filter(Recipe.created_by==filters['created_by'],
@@ -99,10 +94,7 @@ def recipe_search():
                         #    Recipe.average_cost_rating >= filters.average_cost_rating   
     
     for recipe in results:
-        recipe.ingredients = get_recipe_ingredients(recipe.id)
-        
-    print([recipe.to_dict_w_ingredients() for recipe in results])
-                           
+        recipe.ingredients = get_recipe_ingredients(recipe.id)                           
     
     return jsonify({'recipes': [recipe.to_dict_w_ingredients() for recipe in results]}), 200
 
@@ -228,7 +220,6 @@ def add_recipe_to_recipebox(username,recipe_id):
             opts['custom_meal_types'] = str(recipe.meal_types)
         if not opts['custom_meat_options']: 
             opts['custom_meat_options'] = str(recipe.meat_options)
-        print(recipe.meat_options)
     except:
         return jsonify({'message': 'Error: User could not be found'}), 400
     # use user_id & recipe_id to create entry
