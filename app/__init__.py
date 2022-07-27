@@ -16,7 +16,7 @@ app.config.from_object(Config)
 
 db.init_app(app)
 migrate = Migrate(app,db)
-CORS(app, origins=['http://127.0.0.1:3000/', 'http://localhost:3000','http://localhost:3000/', 'http://localhost:3000/register'])
+CORS(app, origins=['http://127.0.0.1:3000/', 'http://localhost:3000','http://localhost:3000/', 'http://localhost:3000/register', 'https://auto-meal-planner-ct.web.app/*', 'https://auto-meal-planner-ct--amp-ct-try*-*.web.app'],)
 
 app.register_blueprint(user)
 app.register_blueprint(recipes)
